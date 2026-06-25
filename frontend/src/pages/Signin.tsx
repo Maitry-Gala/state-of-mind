@@ -50,7 +50,6 @@ export function SignIn({ onSwitch }: { onSwitch: () => void }) {
       const {token} = response.data;
 
       localStorage.setItem("token", token);
-      console.log("Success:",response.data);
       toast.success("Welcome back");
       navigate("/dashboard");
       //redirect or set auth state here

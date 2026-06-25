@@ -20,8 +20,7 @@ import { auth } from "../middleware/auth.js";
 import { random } from "../utils/random.js";
 const userRouter: Router = Router();
 
-userRouter.post(
-  "/signup",
+userRouter.post("/signup",
   validate(signupSchema),
   async (req: Request, res: Response) => {
     const { email, password, firstName, lastName } = req.body;
@@ -55,8 +54,7 @@ userRouter.post(
   },
 );
 
-userRouter.post(
-  "/signin",
+userRouter.post("/signin",
   validate(signinSchema),
   async (req: Request, res: Response) => {
     const { email, password } = req.body;
@@ -103,8 +101,7 @@ userRouter.post(
   },
 );
 
-userRouter.post(
-  "/content",
+userRouter.post("/content",
   auth,
   validate(contentSchema),
   async (req: Request, res: Response) => {

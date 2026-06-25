@@ -1,6 +1,6 @@
-export function Input({ onChange, placeholder }: {
+export function Input({ onChange, placeholder,value }: {
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  placeholder: string;
+  placeholder: string; value : string
 }) {
   return (
     <div>
@@ -8,6 +8,7 @@ export function Input({ onChange, placeholder }: {
         type="text"
         placeholder={placeholder}
         className="px-4 py-2 m-2 border rounded"
+        value={value}
         onChange={onChange}
       />
     </div>

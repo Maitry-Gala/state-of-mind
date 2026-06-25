@@ -6,6 +6,7 @@ import {CreateContentModal} from"../components/model/CreateContentModel"
 import { useState } from "react"
 import { Sidebar } from "../components/asidebar/Slidebar"
 
+
 export function Dashboard() {
   const [modalOpen, setModalOopen] = useState(false);
 
@@ -21,9 +22,11 @@ export function Dashboard() {
       </div>
 
       <div className="flex gap-4 items-start">
-         <Card title="Cool Tweet" url="https://x.com/kirat_tw/status/2039031795283526111" type="tweet" />
-
-        <Card title="Cool Video" url="https://www.youtube.com/watch?v=xwhJfqIyoBY" type="youtube" />
+      
+          <Card title="Cool Tweet" url="https://x.com/kirat_tw/status/2039031795283526111" type="article" />
+      
+        <Card title="Cool Video" url="https://www.youtube.com/watch?v=xwhJfqIyoBY" type="video" />
+        
 
       </div>
     </div>
