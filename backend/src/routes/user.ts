@@ -18,6 +18,7 @@ import {
 import { validate } from "../middleware/validate.js";
 import { auth } from "../middleware/auth.js";
 import { random } from "../utils/random.js";
+import { record } from "zod";
 const userRouter: Router = Router();
 
 userRouter.post("/signup",
@@ -133,14 +134,32 @@ userRouter.post("/content",
 userRouter.get("/content", auth, async (req: Request, res: Response) => {
   try {
     const userId = req.userId;
+    const q = req.query.q as string | undefined;
+    const cursor = req.query.cursor as string | undefined;
+    const limit = 10;
+
+    const query : Record<string, unknown> = {userId};
+
+    if(q && q.trim()) {
+      query.title = { $regex: q.trim(), $options: "i" };
+    }
+
+    if(cursor) {
+      query._id = {$lt: cursor};
+    }
     const content = await contentModel
-      .find({
-        userId: userId,
-      })
+      .find(query)
+       .sort({ _id: -1 }) // newest first
+      .limit(limit + 1) // fetch one extra to know there more
       .populate("userId", "username");
+
+      const hasMore = content.length > limit;
+      if(hasMore) content.pop();
 
     return res.status(201).json({
       content,
+      hasMore,
+      nextCursor: hasMore ? content[content.length - 1]._id : null,
     });
   } catch (e) {
     return res.status(500).json({

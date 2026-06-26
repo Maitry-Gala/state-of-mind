@@ -12,7 +12,7 @@ import { CardSkeleton } from "../components/ui/CardSkeleton";
 
 function DashboardInner() {
   const [modalOpen, setModalOpen] = useState(false);
-  const { cards, filter ,loading} = useContent();
+  const { cards, filter, loading, search, setSearch } = useContent();
 
   const filtered =
     filter === "all" ? cards : cards.filter((c) => c.type === filter);
@@ -45,6 +45,15 @@ function DashboardInner() {
 
         {/* Topbar */}
         <div className="flex justify-end gap-3 mb-6">
+          <div className="flex flex-1 max-w-sm">
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search in your brain.."
+              className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 bg-white outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-all"
+            />
+          </div>
+
           <Button
             variant="primary"
             text="Share Brain"

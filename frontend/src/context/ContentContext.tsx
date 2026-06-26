@@ -18,6 +18,8 @@ interface ContentContextType {
   addCard: (card: Content) => void;
   deleteCard: (id: string) => void;
   refresh: () => void;
+  search : string;
+  setSearch: (s: string) => void;
 }
 
 export const ContentContext = createContext<ContentContextType | null>(null);
@@ -26,13 +28,19 @@ export function ContentProvider({ children }: { children: ReactNode }) {
   const [cards, setCards] = useState<Content[]>([]);
   const [filter, setFilter] = useState<ContentType | "all">("all");
   const[loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
 
-  function fetchCards() {
+  function fetchCards(q?:string) {
     setLoading(true)
-    api.get("/user/content").then((res) => setCards(res.data.content ?? [])).finally(() => setLoading(false));
+    api.get("/user/content",{params: q ? {q} : {}})
+    .then((res) => setCards(res.data.content ?? []))
+    .finally(() => setLoading(false));
   }
 
-  useEffect(() => { fetchCards(); }, []);
+  useEffect(() => {
+  const timer = setTimeout(() => fetchCards(search), 600);
+  return () => clearTimeout(timer);
+}, [search]);
 
   function addCard(card: Content) {
     setCards((prev) => [card, ...prev]);
@@ -43,7 +51,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <ContentContext.Provider value={{ cards,loading, filter, setFilter, addCard, deleteCard, refresh: fetchCards }}>
+    <ContentContext.Provider value={{ cards,loading, filter, setFilter, addCard, deleteCard, refresh: fetchCards,search,setSearch }}>
       {children}
     </ContentContext.Provider>
   );
