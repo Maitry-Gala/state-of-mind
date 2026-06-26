@@ -1,18 +1,3 @@
-// import type { ReactElement } from "react";
-
-// export function Sidebaritem({text,icon}: {text:string,icon:ReactElement }){
-//     return (
-//         <div className="flex text-primary py-2 items-center">
-//             <div className="pr-2">
-//                 {icon}
-//             </div>
-//             <div className="pl-2">
-//                 {text}
-//             </div>
-//         </div>
-//     )
-// }
-
 import type { ReactElement } from "react";
 import { cn } from "../../libs/utils";
 

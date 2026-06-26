@@ -112,7 +112,7 @@ userRouter.post("/content",
     // }
 
     try {
-      await contentModel.create({
+      const doc = await contentModel.create({
         link,
         type,
         title,
@@ -120,7 +120,7 @@ userRouter.post("/content",
         tags: tags ?? [],
       });
 
-      return res.status(200).json({ message: "Content added" });
+      return res.status(200).json({ message: "Content added",content: doc });
     } catch (e) {
       return res.status(500).json({
         message: "Something went wrong",

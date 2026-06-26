@@ -1,18 +1,26 @@
-import { memo, useState, useEffect, Component, type ReactNode } from "react";
+import {
+  memo,
+  useState,
+  useEffect,
+  Component,
+  type ReactNode,
+  use,
+} from "react";
 import { DeleteIcon } from "../icons/DeleteIcon";
 import { DocumentIcon } from "../icons/DocumentIcon";
 import { ShareIcon } from "../icons/ShareIcon";
 import { Tweet } from "react-tweet";
 import Youtube from "react-youtube";
-import { boolean } from "zod";
+import api from "../../libs/axios";
+import { useContext } from "react";
+import { ContentContext } from "../../context/ContentContext";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const extractYoutubeId = (url: string) =>
   url.match(/(?:v=|youtu\.be\/)([^&?/]+)/)?.[1];
 
-const extractTweetId = (url: string) =>
-  url.match(/status\/(\d+)/)?.[1];
+const extractTweetId = (url: string) => url.match(/status\/(\d+)/)?.[1];
 
 // ─── Link Preview ─────────────────────────────────────────────────────────────
 
@@ -47,20 +55,20 @@ function LinkPreview({ url }: { url: string }) {
       .finally(() => setLoading(false));
   }, [url]);
 
-  if (loading) return (
-    <div className="w-full h-24 rounded-md bg-gray-100 animate-pulse" />
-  );
+  if (loading)
+    return <div className="w-full h-24 rounded-md bg-gray-100 animate-pulse" />;
 
-  if (failed) return (
-    <a
-      href={url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="text-blue-500 hover:underline text-sm break-all"
-    >
-      {url}
-    </a>
-  );
+  if (failed)
+    return (
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-blue-500 hover:underline text-sm break-all"
+      >
+        {url}
+      </a>
+    );
 
   return (
     <a
@@ -96,7 +104,9 @@ class TweetEmbed extends Component<
   { crashed: boolean }
 > {
   state = { crashed: false };
-  componentDidCatch() { this.setState({ crashed: true }); }
+  componentDidCatch() {
+    this.setState({ crashed: true });
+  }
   render() {
     if (this.state.crashed) return this.props.fallback;
     return (
@@ -114,7 +124,9 @@ class CardErrorBoundary extends Component<
   { crashed: boolean }
 > {
   state = { crashed: false };
-  componentDidCatch() { this.setState({ crashed: true }); }
+  componentDidCatch() {
+    this.setState({ crashed: true });
+  }
   render() {
     return this.state.crashed ? (
       <div className="p-4 w-72 bg-white rounded-md border border-red-200 text-red-400 text-sm">
@@ -135,16 +147,24 @@ type ContentType = "image" | "video" | "article" | "audio";
 function ContentEmbed({ url, type }: { url: string; type: ContentType }) {
   if (type === "video") {
     const ytId = extractYoutubeId(url);
-    return ytId
-      ? <Youtube videoId={ytId} className="w-full max-h-48 overflow-hidden rounded-md" iframeClassName="w-full max-h-48 overflow-hidden aspect-video rounded-md" />
-      : <LinkPreview url={url} />;
+    return ytId ? (
+      <Youtube
+        videoId={ytId}
+        className="w-full max-h-48 overflow-hidden rounded-md"
+        iframeClassName="w-full max-h-48 overflow-hidden aspect-video rounded-md"
+      />
+    ) : (
+      <LinkPreview url={url} />
+    );
   }
 
   if (type === "article") {
     const tweetId = extractTweetId(url);
-    return tweetId
-      ? <TweetEmbed id={tweetId} fallback={<LinkPreview url={url} />} />
-      : <LinkPreview url={url} />;
+    return tweetId ? (
+      <TweetEmbed id={tweetId} fallback={<LinkPreview url={url} />} />
+    ) : (
+      <LinkPreview url={url} />
+    );
   }
 
   // image, audio → OG preview
@@ -154,12 +174,26 @@ function ContentEmbed({ url, type }: { url: string; type: ContentType }) {
 // ─── Card ─────────────────────────────────────────────────────────────────────
 
 interface CardProps {
+  id: string;
   title: string;
   url: string;
   type: ContentType;
+  readonly?: boolean;
 }
 
-export const Card = memo(function Card({ title, url, type }: CardProps) {
+export const Card = memo(function Card({
+  id,
+  title,
+  url,
+  type,
+  readonly,
+}: CardProps) {
+  const ctx = useContext(ContentContext);
+
+  async function handleDelete() {
+    await api.delete("/user/content", { data: { contentId: id } });
+    ctx?.deleteCard(id);
+  }
   return (
     <CardErrorBoundary>
       <div className="p-4 w-72 bg-white rounded-md border border-gray-200 shadow-sm">
@@ -168,14 +202,23 @@ export const Card = memo(function Card({ title, url, type }: CardProps) {
             <DocumentIcon />
             <span className="truncate">{title}</span>
           </div>
-          <div className="flex items-center gap-2 shrink-0 ml-2 text-gray-400">
-            <button aria-label="Share" className="hover:text-gray-600 transition-colors">
-              <ShareIcon />
-            </button>
-            <button aria-label="Delete" className="hover:text-red-500 transition-colors">
-              <DeleteIcon />
-            </button>
-          </div>
+          {!readonly && (
+            <div className="flex items-center gap-2 shrink-0 ml-2 text-gray-400">
+              <button
+                aria-label="Share"
+                className="hover:text-gray-600 transition-colors"
+              >
+                <ShareIcon />
+              </button>
+              <button
+                aria-label="Delete"
+                onClick={handleDelete}
+                className="hover:text-red-500 transition-colors"
+              >
+                <DeleteIcon />
+              </button>
+            </div>
+          )}
         </div>
         <div className="mt-4">
           <ContentEmbed url={url} type={type} />
@@ -184,4 +227,3 @@ export const Card = memo(function Card({ title, url, type }: CardProps) {
     </CardErrorBoundary>
   );
 });
-

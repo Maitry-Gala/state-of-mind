@@ -1,38 +1,99 @@
-import { Button } from "../components/ui/Button"
-import { Card } from "../components/ui/Card"
-import { Plus } from "../components/icons/Plus"
-import { ShareIcon } from "../components/icons/ShareIcon"
-import {CreateContentModal} from"../components/model/CreateContentModel"
-import { useState } from "react"
-import { Sidebar } from "../components/asidebar/Slidebar"
+import { useState } from "react";
+import { toast } from "sonner";
+import { Button } from "../components/ui/Button";
+import { Card } from "../components/ui/Card";
+import { Plus } from "../components/icons/Plus";
+import { ShareIcon } from "../components/icons/ShareIcon";
+import { CreateContentModal } from "../components/model/CreateContentModel";
+import { Sidebar } from "../components/asidebar/Slidebar";
+import { ContentProvider, useContent } from "../context/ContentContext";
+import api from "../libs/axios";
+import { CardSkeleton } from "../components/ui/CardSkeleton";
 
+function DashboardInner() {
+  const [modalOpen, setModalOpen] = useState(false);
+  const { cards, filter ,loading} = useContent();
 
-export function Dashboard() {
-  const [modalOpen, setModalOopen] = useState(false);
+  const filtered =
+    filter === "all" ? cards : cards.filter((c) => c.type === filter);
 
-  return <div>
-    <Sidebar/> 
+  async function handleShareBrain() {
+    try {
+      const res = await api.post("/user/brain/share", { share: true });
+      const hash = res.data.hash;
+      if (!hash) {
+        toast.error("Could not generate share link");
+        return;
+      }
+      const link = `${window.location.origin}/brain/${hash}`;
+      await navigator.clipboard.writeText(link);
+      toast.success("Link copied to clipboard!");
+    } catch {
+      toast.error("Failed to share brain");
+    }
+  }
 
-    <div className="p-4 ml-72 min-h-screen bg-gray-100">
-    <CreateContentModal open ={modalOpen} onClose={ () => {setModalOopen(false)}}/>
-      <div className="flex justify-end gap-4">
-        <Button variant="primary" text="Share Brain" disabled={false} startIcon={<ShareIcon/>}></Button>
+  return (
+    <div className="flex min-h-screen bg-gray-100">
+      <Sidebar />
 
-        <Button variant="secondary"  onClick={() => {setModalOopen(true)}} text="Add Content" disabled={false} startIcon={<Plus/>}></Button>
-      </div>
+      <div className="flex-1 ml-64 p-6">
+        <CreateContentModal
+          open={modalOpen}
+          onClose={() => setModalOpen(false)}
+        />
 
-      <div className="flex gap-4 items-start">
-      
-          <Card title="Cool Tweet" url="https://x.com/kirat_tw/status/2039031795283526111" type="article" />
-      
-        <Card title="Cool Video" url="https://www.youtube.com/watch?v=xwhJfqIyoBY" type="video" />
-        <Card title="Cool Video" url="https://i.pinimg.com/736x/cf/7f/61/cf7f617e6271366cdea7264aee4dfc9d.jpg" type="image" />
-        <Card title="Cool Video" url="https://soundcloud.com/justicehardcore/feelslikeheaven?utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing" type="audio" />
-        
+        {/* Topbar */}
+        <div className="flex justify-end gap-3 mb-6">
+          <Button
+            variant="primary"
+            text="Share Brain"
+            startIcon={<ShareIcon />}
+            onClick={handleShareBrain}
+            disabled={false}
+          />
+          <Button
+            variant="secondary"
+            text="Add Content"
+            startIcon={<Plus />}
+            onClick={() => setModalOpen(true)}
+            disabled={false}
+          />
+        </div>
 
+        {/* Cards */}
+        {loading ? (
+          <div className="flex gap-4 flex-wrap items-start">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <CardSkeleton key={i} />
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-64 text-gray-400">
+            <p className="text-sm">No content yet. Add something!</p>
+          </div>
+        ) : (
+          <div className="flex gap-4 flex-wrap items-start">
+            {filtered.map((card) => (
+              <Card
+                key={card._id}
+                id={card._id}
+                title={card.title}
+                url={card.link}
+                type={card.type}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
-  </div>
+  );
 }
 
- 
+export function Dashboard() {
+  return (
+    <ContentProvider>
+      <DashboardInner />
+    </ContentProvider>
+  );
+}
