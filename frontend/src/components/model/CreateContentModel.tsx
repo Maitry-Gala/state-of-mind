@@ -30,7 +30,8 @@ export function CreateContentModal({
     }
     try{
         setSubmitting(true);
-        await api.post("user/content", {title,link,type, tags: []});
+        await api.post("/user/content", {title,link,type, tags: []});
+        console.log("inside try")
         toast.success("Content added");
         setTitle("");
         setLink("");

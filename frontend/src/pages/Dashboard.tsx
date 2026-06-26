@@ -26,6 +26,8 @@ export function Dashboard() {
           <Card title="Cool Tweet" url="https://x.com/kirat_tw/status/2039031795283526111" type="article" />
       
         <Card title="Cool Video" url="https://www.youtube.com/watch?v=xwhJfqIyoBY" type="video" />
+        <Card title="Cool Video" url="https://i.pinimg.com/736x/cf/7f/61/cf7f617e6271366cdea7264aee4dfc9d.jpg" type="image" />
+        <Card title="Cool Video" url="https://soundcloud.com/justicehardcore/feelslikeheaven?utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing" type="audio" />
         
 
       </div>
