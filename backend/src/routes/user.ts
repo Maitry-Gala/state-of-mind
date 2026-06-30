@@ -4,12 +4,7 @@ import jwt from "jsonwebtoken";
 import bcrypt, { hash } from "bcrypt";
 const JWT_SECRET = process.env.JWT_SECRET;
 import { Router, type Request, type Response } from "express";
-import {
-  UserModel,
-  TagModel,
-  linkModel,
-  contentModel,
-} from "../db.js";
+import { UserModel, TagModel, linkModel, contentModel } from "../db.js";
 import {
   signupSchema,
   signinSchema,
@@ -21,7 +16,8 @@ import { random } from "../utils/random.js";
 import { record } from "zod";
 const userRouter: Router = Router();
 
-userRouter.post("/signup",
+userRouter.post(
+  "/signup",
   validate(signupSchema),
   async (req: Request, res: Response) => {
     const { email, password, firstName, lastName } = req.body;
@@ -55,7 +51,8 @@ userRouter.post("/signup",
   },
 );
 
-userRouter.post("/signin",
+userRouter.post(
+  "/signin",
   validate(signinSchema),
   async (req: Request, res: Response) => {
     const { email, password } = req.body;
@@ -104,7 +101,9 @@ userRouter.post("/signin",
 
 userRouter.get("/me", auth, async (req: Request, res: Response) => {
   try {
-    const user = await UserModel.findById(req.userId).select("firstName lastName email");
+    const user = await UserModel.findById(req.userId).select(
+      "firstName lastName email",
+    );
     if (!user) return res.status(404).json({ message: "User not found" });
     return res.status(200).json({ user });
   } catch {
@@ -112,26 +111,41 @@ userRouter.get("/me", auth, async (req: Request, res: Response) => {
   }
 });
 
-userRouter.post("/content",
+userRouter.post(
+  "/content",
   auth,
   validate(contentSchema),
   async (req: Request, res: Response) => {
     const { link, type, title, tags } = req.body;
 
-    // if (!req.userId) {
-    //   return res.status(401).json({ message: "Unauthorized" });
-    // }
-
     try {
+      let description = "";
+      try {
+        const ogRes = await fetch(
+          `https://api.microlink.io?url=${encodeURIComponent(link)}`,
+        );
+        const ogData = await ogRes.json();
+        description = ogData.data?.description ?? "";
+      } catch {
+        const doc = await contentModel.create({
+          link,
+          type,
+          title,
+          userId: req.userId,
+          tags: tags ?? [],
+        });
+        return res.status(200).json({ message: "Content added", content: doc });
+      }
       const doc = await contentModel.create({
         link,
         type,
         title,
+        description,
         userId: req.userId,
         tags: tags ?? [],
       });
 
-      return res.status(200).json({ message: "Content added",content: doc });
+      return res.status(200).json({ message: "Content added", content: doc });
     } catch (e) {
       return res.status(500).json({
         message: "Something went wrong",
@@ -148,27 +162,27 @@ userRouter.get("/content", auth, async (req: Request, res: Response) => {
     const cursor = req.query.cursor as string | undefined;
     const limit = 10;
 
-    const query : Record<string, unknown> = {userId};
+    const query: Record<string, unknown> = { userId };
 
-    if(q && q.trim()) {
+    if (q && q.trim()) {
       query.title = { $regex: q.trim(), $options: "i" };
     }
 
-    if(cursor) {
-      query._id = {$lt: cursor};
+    if (cursor) {
+      query._id = { $lt: cursor };
     }
     const content = await contentModel
       .find(query)
-       .sort({ _id: -1 }) // newest first
+      .sort({ _id: -1 }) // newest first
       .limit(limit + 1) // fetch one extra to know there more
       .populate("userId", "username");
 
-      const hasMore = content.length > limit;
-      if(hasMore) content.pop();
+    const hasMore = content.length > limit;
+    if (hasMore) content.pop();
 
     return res.status(201).json({
       content,
-      hasMore
+      hasMore,
     });
   } catch (e) {
     return res.status(500).json({
@@ -177,27 +191,23 @@ userRouter.get("/content", auth, async (req: Request, res: Response) => {
   }
 });
 
-userRouter.delete(
-  "/content",
-  auth,
-  async (req: Request, res: Response) => {
-    try {
-      const contentId = req.body.contentId;
+userRouter.delete("/content", auth, async (req: Request, res: Response) => {
+  try {
+    const contentId = req.body.contentId;
 
-      await contentModel.deleteOne({
-        _id: contentId,
-        userId: req.userId,
-      });
-      return res.status(200).json({
-        message: "content deleted successfully",
-      });
-    } catch (e) {
-      return res.status(500).json({
-        message: "Something went wrong",
-      });
-    }
-  },
-);
+    await contentModel.deleteOne({
+      _id: contentId,
+      userId: req.userId,
+    });
+    return res.status(200).json({
+      message: "content deleted successfully",
+    });
+  } catch (e) {
+    return res.status(500).json({
+      message: "Something went wrong",
+    });
+  }
+});
 
 userRouter.post("/brain/share", auth, async (req: Request, res: Response) => {
   try {
@@ -212,8 +222,8 @@ userRouter.post("/brain/share", auth, async (req: Request, res: Response) => {
 
       if (existing) {
         return res.status(200).json({
-           message: "Brain is already public",
-           hash: existing.hash
+          message: "Brain is already public",
+          hash: existing.hash,
         });
       }
 
@@ -223,23 +233,21 @@ userRouter.post("/brain/share", auth, async (req: Request, res: Response) => {
       });
 
       return res.status(201).json({
-         message: "Brain is now set to public",
-         hash: link.hash, 
+        message: "Brain is now set to public",
+        hash: link.hash,
       });
-
     } else {
       await linkModel.deleteOne({ userId: req.userId });
 
-      return res.status(200).json({ message: "Brain is now set to private" }); 
+      return res.status(200).json({ message: "Brain is now set to private" });
     }
-
   } catch (e) {
-    console.error(e); 
+    console.error(e);
     return res.status(500).json({ message: "Something went wrong" }); // don't expose e
   }
 });
 
-userRouter.get("/brain/:shareLink", async (req: Request, res: Response) => {  // ✅ fixed :shareLine → :shareLink
+userRouter.get("/brain/:shareLink", async (req: Request, res: Response) => {
   try {
     const hash = req.params.shareLink;
 
@@ -247,15 +255,15 @@ userRouter.get("/brain/:shareLink", async (req: Request, res: Response) => {  //
       return res.status(400).json({ message: "Invalid value for 'hash'" });
     }
 
-    const link = await linkModel.findOne({ hash });  // now inside try-catch
+    const link = await linkModel.findOne({ hash }); // now inside try-catch
 
     if (!link) {
       return res.status(404).json({ message: "Brain is set to be private" });
     }
 
-    const [content, user] = await Promise.all([  
+    const [content, user] = await Promise.all([
       contentModel.find({ userId: link.userId }),
-      UserModel.findOne({ _id: link.userId }),    
+      UserModel.findOne({ _id: link.userId }),
     ]);
 
     if (!user) {
@@ -265,12 +273,11 @@ userRouter.get("/brain/:shareLink", async (req: Request, res: Response) => {  //
     return res.status(200).json({
       message: "Brain found",
       username: `${user.firstName} ${user.lastName}`,
-      content,              
+      content,
     });
-
   } catch (e) {
     console.error(e);
-    return res.status(500).json({ message: "Something went wrong" });  
+    return res.status(500).json({ message: "Something went wrong" });
   }
 });
 

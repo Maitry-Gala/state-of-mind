@@ -7,7 +7,7 @@ import userRouter from "./routes/user.js";
 import cors from 'cors';
 import passport from "passport";
 import "./config/passport.js";
-import authRouter from "./routes/auth.js";
+import askRouter from "./routes/ask.js";
 
 const app = express();
 app.use(express.json());
@@ -26,7 +26,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 app.use("/api/v1/user",userRouter);
-app.use("/api/v1/auth", authRouter);
+app.use("/api/v1/auth", askRouter);
 
 connectToMongoDB().then(() => {
     app.listen(3000, () => {
