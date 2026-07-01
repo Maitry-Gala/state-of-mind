@@ -177,6 +177,7 @@ interface CardProps {
   id: string;
   title: string;
   url: string;
+  description?: string;
   type: ContentType;
   readonly?: boolean;
 }
@@ -185,6 +186,7 @@ export const Card = memo(function Card({
   id,
   title,
   url,
+  description,
   type,
   readonly,
 }: CardProps) {
@@ -222,6 +224,9 @@ export const Card = memo(function Card({
         </div>
         <div className="mt-4">
           <ContentEmbed url={url} type={type} />
+        </div>
+        <div className="mt-3 text-sm text-gray-600 dark:text-gray-300 line-clamp-3">
+          {description}
         </div>
       </div>
     </CardErrorBoundary>

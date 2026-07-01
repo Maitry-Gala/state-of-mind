@@ -17,6 +17,7 @@ export function CreateContentModal({ open, onClose }: { open: boolean; onClose: 
   const [title, setTitle] = useState("");
   const [link, setLink] = useState("");
   const [type, setType] = useState<ContentType>("article");
+  const [description, setDescription] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const { addCard } = useContent();
 
@@ -29,13 +30,13 @@ export function CreateContentModal({ open, onClose }: { open: boolean; onClose: 
     }
     try {
       setSubmitting(true);
-      const res = await api.post("/user/content", { title, link, type, tags: [] });
+      const res = await api.post("/user/content", { title, link, type, tags: [], description });
       // optimistically add — if backend returns the doc use it, else refetch
       if (res.data.content) {
         addCard(res.data.content);
       }
       toast.success("Content added");
-      setTitle(""); setLink(""); setType("article");
+      setTitle(""); setLink(""); setType("article"); setDescription("");
       onClose();
     } catch {
       toast.error("Failed to add content");
@@ -76,6 +77,15 @@ export function CreateContentModal({ open, onClose }: { open: boolean; onClose: 
               value={link}
               onChange={(e) => setLink(e.target.value)}
               placeholder="https://"
+              className="w-full px-3 py-2.5 text-sm rounded-lg border border-gray-200 outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-all dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 dark:placeholder-gray-500 focus:ring-purple-300 dark:focus:ring-purple-800"
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Description</label>
+            <input
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="e.g.This AI article is on RAG"
               className="w-full px-3 py-2.5 text-sm rounded-lg border border-gray-200 outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-all dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 dark:placeholder-gray-500 focus:ring-purple-300 dark:focus:ring-purple-800"
             />
           </div>

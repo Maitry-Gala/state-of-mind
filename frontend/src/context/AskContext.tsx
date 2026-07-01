@@ -27,7 +27,7 @@ export function AskProvider({ children }: { children: ReactNode }) {
     setLoading(true);
 
     try {
-      const res = await api.post("/ask/", {
+      const res = await api.post("/chat/", {
         question,
         history: messages, // send prior conversation
       });

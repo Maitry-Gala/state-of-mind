@@ -103,6 +103,7 @@ function DashboardInner() {
                 title={card.title}
                 url={card.link}
                 type={card.type}
+                description={card.description}
               />
             ))}
           </div>

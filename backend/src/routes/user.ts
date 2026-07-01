@@ -116,26 +116,9 @@ userRouter.post(
   auth,
   validate(contentSchema),
   async (req: Request, res: Response) => {
-    const { link, type, title, tags } = req.body;
+    const { link, type, title, tags, description } = req.body;
 
     try {
-      let description = "";
-      try {
-        const ogRes = await fetch(
-          `https://api.microlink.io?url=${encodeURIComponent(link)}`,
-        );
-        const ogData = await ogRes.json();
-        description = ogData.data?.description ?? "";
-      } catch {
-        const doc = await contentModel.create({
-          link,
-          type,
-          title,
-          userId: req.userId,
-          tags: tags ?? [],
-        });
-        return res.status(200).json({ message: "Content added", content: doc });
-      }
       const doc = await contentModel.create({
         link,
         type,
